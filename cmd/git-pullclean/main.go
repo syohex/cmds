@@ -12,6 +12,8 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/fatih/color"
 )
 
 var repoName string
@@ -21,15 +23,25 @@ func init() {
 	flag.Parse()
 }
 
-func runGitCommand(args []string, timeout time.Duration) error {
+func runGitCommand(prompt string, args []string, timeout time.Duration) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	fmt.Printf("$ git %s\n", strings.Join(args, " "))
+	if prompt != "" {
+		fmt.Printf("%s .. ", prompt)
+	}
 
 	cmd := exec.CommandContext(ctx, "git", args...)
 	cmd.Stdout = os.Stdout
-	return cmd.Run()
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		color.Red("failed\n")
+		return err
+	}
+
+	color.Green("ok\n")
+	return nil
 }
 
 func getGitCommandOutput(args []string, timeout time.Duration) (string, error) {
@@ -57,19 +69,20 @@ func getCurrentBranchName() (string, error) {
 
 func isRepositoryClean() error {
 	gitArgs := []string{"diff", "--quiet"}
-	return runGitCommand(gitArgs, 10*time.Second)
+	return runGitCommand("Check if repository is clean", gitArgs, 10*time.Second)
 }
 
 func pullIntoCurrentBranch(branch string) error {
 	// set so long time for bigger repository
 	gitArgs := []string{"pull", "--rebase", repoName, branch}
-	return runGitCommand(gitArgs, 600*time.Second)
+	prompt := fmt.Sprintf("Pull into '%s' branch", branch)
+	return runGitCommand(prompt, gitArgs, 600*time.Second)
 }
 
 func fetchPrune() error {
 	// set longer time for bigger repository
 	gitArgs := []string{"fetch", "--prune"}
-	return runGitCommand(gitArgs, 600*time.Second)
+	return runGitCommand("Fetch and prune", gitArgs, 600*time.Second)
 }
 
 func cleanupLfsFiles() error {
@@ -89,7 +102,7 @@ func cleanupLfsFiles() error {
 	}
 
 	gitArgs := []string{"lfs", "prune"}
-	return runGitCommand(gitArgs, 10*time.Second)
+	return runGitCommand("Cleanup LFS files", gitArgs, 10*time.Second)
 }
 
 func pullAndCleanup() error {
@@ -171,7 +184,8 @@ func deleteMergedBranches() error {
 		fmt.Printf("Delete branch='%s'\n", branch)
 
 		gitArgs := []string{"branch", "-d", branch}
-		if err := runGitCommand(gitArgs, timeout); err != nil {
+		prompt := fmt.Sprintf("Delete branch '%s'", branch)
+		if err := runGitCommand(prompt, gitArgs, timeout); err != nil {
 			fmt.Fprintf(os.Stderr, "failed to delete branch='%s'\n", branch)
 			continue
 		}
