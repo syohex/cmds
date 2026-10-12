@@ -1,2 +1,3 @@
 *~
 cmd/git-pullclean/git-pullclean
+cmd/cdr_cleanup/cdr_cleanup
