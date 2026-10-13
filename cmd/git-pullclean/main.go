@@ -182,22 +182,15 @@ func deleteMergedBranches() error {
 		return fmt.Errorf("failed to collect merged branches: %w", err)
 	}
 
-	deletedBranches := 0
 	timeout := 5 * time.Second
-	for _, branch := range mergedBranches {
-		fmt.Printf("Delete branch='%s'\n", branch)
 
-		gitArgs := []string{"branch", "-d", branch}
-		prompt := fmt.Sprintf("Delete branch '%s'", branch)
-		if err := runGitCommand(prompt, gitArgs, timeout); err != nil {
-			fmt.Fprintf(os.Stderr, "failed to delete branch='%s'\n", branch)
-			continue
-		}
-
-		deletedBranches++
+	gitArgs := []string{"branch", "--delete"}
+	gitArgs = append(gitArgs, mergedBranches...)
+	if err := runGitCommand("Delete branches\n", gitArgs, timeout); err != nil {
+		return fmt.Errorf("failed to delete merged branches: %w", err)
 	}
 
-	fmt.Printf("Delete %d branches\n", deletedBranches)
+	fmt.Printf("Delete %d branches\n", len(mergedBranches))
 	return nil
 }
 
