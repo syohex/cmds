@@ -182,6 +182,11 @@ func deleteMergedBranches() error {
 		return fmt.Errorf("failed to collect merged branches: %w", err)
 	}
 
+	if len(mergedBranches) == 0 {
+		// there are no merged branches
+		return nil
+	}
+
 	timeout := 5 * time.Second
 
 	gitArgs := []string{"branch", "--delete"}
