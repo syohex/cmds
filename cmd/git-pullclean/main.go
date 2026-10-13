@@ -17,9 +17,11 @@ import (
 )
 
 var repoName string
+var pruneLFS bool
 
 func init() {
 	flag.StringVar(&repoName, "repo", "origin", "repository name(default='origin')")
+	flag.BoolVar(&pruneLFS, "lfs", false, "cleanup LFS files")
 	flag.Parse()
 }
 
@@ -121,9 +123,11 @@ func pullAndCleanup() error {
 		return fmt.Errorf("failed to remove unnecessary tracking references: %w", err)
 	}
 
-	// clean LFS files if the repository uses Git LFs
-	if err := cleanupLfsFiles(); err != nil {
-		return fmt.Errorf("failed to clean up LFS files: %w", err)
+	if pruneLFS {
+		// clean LFS files if the repository uses Git LFs
+		if err := cleanupLfsFiles(); err != nil {
+			return fmt.Errorf("failed to clean up LFS files: %w", err)
+		}
 	}
 
 	return nil
