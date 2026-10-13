@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -70,8 +71,10 @@ func filterEntries(dirs []string, regexps []*regexp.Regexp) []string {
 		}
 
 		if ok {
-			keepEntries = append(keepEntries, dir)
-
+			// keep only existing directories
+			if _, err := os.Stat(dir); !errors.Is(err, os.ErrNotExist) {
+				keepEntries = append(keepEntries, dir)
+			}
 		}
 	}
 
