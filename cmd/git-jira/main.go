@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"runtime"
 	"strings"
+
+	"github.com/syohex/cmds"
 )
 
 func getJiraUrl() (string, error) {
@@ -29,42 +30,6 @@ func getTicketName() (string, error) {
 	return branch[pos+1:], nil
 }
 
-func isWSL() bool {
-	return os.Getenv("WSL_INTEROP") != ""
-}
-
-func openBrowser(url string) error {
-	var cmd string
-	var args []string
-
-	switch runtime.GOOS {
-	case "windows":
-		cmd = "cmd.exe"
-		args = []string{"/c", "rundll32", "url.dll,FileProtocolHandler", strings.ReplaceAll(url, "&", "^&")}
-	case "darwin":
-		cmd = "open"
-		args = []string{url}
-	default:
-		args = []string{url}
-		if isWSL() {
-			cmd = "/mnt/c/Windows/explorer.exe"
-		} else {
-			cmd = "xdg-open"
-		}
-	}
-
-	c := exec.Command(cmd, args...)
-	if err := c.Start(); err != nil {
-		return err
-	}
-
-	if err := c.Wait(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func _main() int {
 	jiraBase, err := getJiraUrl()
 	if err != nil {
@@ -79,7 +44,7 @@ func _main() int {
 	}
 
 	url := fmt.Sprintf("%s/browse/%s", jiraBase, ticket)
-	if err := openBrowser(url); err != nil {
+	if err := cmds.OpenBrowser(url); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to '%s' browser: %v\n", url, err)
 		return 1
 	}
