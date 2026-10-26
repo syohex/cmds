@@ -32,14 +32,14 @@ func getTicketName() (string, error) {
 	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
 	out, err := cmd.Output()
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
 	branch := strings.TrimSpace(string(out))
 
 	matches := ticketRegex.FindAllString(branch, -1)
 	if len(matches) == 0 {
-		return "", fmt.Errorf("ticket name is not found in branch name(%s)", branch)
+		return "", nil
 	}
 
 	return matches[0], nil
@@ -56,6 +56,16 @@ func _main() int {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to get ticket name from branch: %v\n", err)
 		return 1
+	}
+
+	if ticket == "" {
+		// maybe main branch, open JIRA top
+		if err := cmds.OpenBrowser(jiraBase); err != nil {
+			fmt.Fprintf(os.Stderr, "failed to '%s' browser: %v\n", jiraBase, err)
+			return 1
+		}
+
+		return 0
 	}
 
 	url := fmt.Sprintf("%s/browse/%s", jiraBase, ticket)
