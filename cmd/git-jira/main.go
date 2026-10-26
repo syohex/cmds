@@ -1,13 +1,23 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 
 	"github.com/syohex/cmds"
 )
+
+var dryRun = false
+var ticketRegex = regexp.MustCompile(`[A-Z]+-([0-9])+`)
+
+func init() {
+	flag.BoolVar(&dryRun, "n", false, "dry run")
+	flag.Parse()
+}
 
 func getJiraUrl() (string, error) {
 	url := os.Getenv("JIRA_URL")
@@ -26,8 +36,13 @@ func getTicketName() (string, error) {
 	}
 
 	branch := strings.TrimSpace(string(out))
-	pos := strings.LastIndex(branch, "/")
-	return branch[pos+1:], nil
+
+	matches := ticketRegex.FindAllString(branch, -1)
+	if len(matches) == 0 {
+		return "", fmt.Errorf("ticket name is not found in branch name(%s)", branch)
+	}
+
+	return matches[0], nil
 }
 
 func _main() int {
@@ -44,6 +59,11 @@ func _main() int {
 	}
 
 	url := fmt.Sprintf("%s/browse/%s", jiraBase, ticket)
+	if dryRun {
+		fmt.Println(url)
+		return 0
+	}
+
 	if err := cmds.OpenBrowser(url); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to '%s' browser: %v\n", url, err)
 		return 1
