@@ -41,7 +41,7 @@ func readCdrEntries(file string) ([]string, error) {
 }
 
 func compileFilteredPatterns() ([]*regexp.Regexp, error) {
-	defaultPattern := `(?:\.|node_modules|_?vendor|tmp|temp)`
+	defaultPattern := `/(?:\.|node_modules|_?vendor|te?mp)`
 
 	patterns := flag.Args()
 	patterns = append(patterns, defaultPattern)
