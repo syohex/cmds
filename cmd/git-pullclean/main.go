@@ -199,7 +199,22 @@ func deleteMergedBranches() error {
 	return nil
 }
 
+func checkIsGitRepo() bool {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	args := []string{"rev-parse", "--inside-work-tree"}
+	cmd := exec.CommandContext(ctx, "git", args...)
+	err := cmd.Run()
+	return err == nil
+}
+
 func _main() int {
+	if !checkIsGitRepo() {
+		fmt.Fprintf(os.Stderr, "Here is not git repository\n")
+		return 1
+	}
+
 	if err := isRepositoryClean(); err != nil {
 		fmt.Fprintf(os.Stderr, "This repository is not clean. Please commit changes first\n")
 		return 1
