@@ -5,14 +5,16 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 )
 
 const pwshPath = "/mnt/c/Program Files/PowerShell/7/pwsh.exe"
 
 func IsWSL() bool {
-	_, ok := os.LookupEnv("WSLENV")
-	return ok
+	_, ok1 := os.LookupEnv("WSLENV")
+	_, ok2 := os.LookupEnv("WSL_INTEROP")
+	return ok1 && ok2
 }
 
 func wslOpenUrlByPowerShell(url string) error {

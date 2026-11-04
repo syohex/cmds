@@ -11,7 +11,7 @@ func escapeForCommandPrompt(s string) string {
 }
 
 func OpenBrowser(url string) error {
-	if IsWSL() {
+	if runtime.GOOS == "linux" && IsWSL() {
 		return WSLOpen(url)
 	}
 
