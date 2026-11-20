@@ -18,10 +18,12 @@ import (
 
 var repoName string
 var pruneLFS bool
+var force bool
 
 func init() {
 	flag.StringVar(&repoName, "repo", "origin", "repository name(default='origin')")
 	flag.BoolVar(&pruneLFS, "lfs", false, "cleanup LFS files")
+	flag.BoolVar(&force, "force", false, "force to execute commands without check repo")
 	flag.Parse()
 }
 
@@ -215,9 +217,11 @@ func _main() int {
 		return 1
 	}
 
-	if err := isRepositoryClean(); err != nil {
-		fmt.Fprintf(os.Stderr, "This repository is not clean. Please commit changes first\n")
-		return 1
+	if !force {
+		if err := isRepositoryClean(); err != nil {
+			fmt.Fprintf(os.Stderr, "This repository is not clean. Please commit changes first\n")
+			return 1
+		}
 	}
 
 	if err := pullAndCleanup(); err != nil {
